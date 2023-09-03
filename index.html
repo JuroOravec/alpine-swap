@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/vite.svg"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inconsolata&family=Karla:wght@400;500;700;800&family=Montserrat:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Vite App</title>
+  </head>
+  <body class="px-6 md:px-8">
+    <header class="h-12"></header>
+    <main class="max-w-xl mx-auto">
+      <h1>Alpine Wire Plugin</h1>
+      <section>
+        <h2>Swap Methods</h2>
+        <div>
+          <h3>innerHTML</h3>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div
+              x-wire-source
+              class="swap-card"
+            >
+              <div class="swap-card__header">
+                <h4>
+                  Swap Target
+                </h4>
+              </div>
+              <div class="swap-card__body">
+                <ul class="swap-card__list">
+                  <li>Bob</li>
+                  <li>Susan</li>
+                  <li>Joe</li>
+                  <li>John</li>
+                </ul>
+              </div>
+            </div>
+            <button class="swap-btn">
+              <span>
+                Swap
+              </span>
+            </button>
+            <div
+              x-wire-target
+              class="swap-card"
+            >
+              <div class="swap-card__header">
+                <h4>
+                  Swap Source
+                </h4>
+              </div>
+              <div class="swap-card__body">
+                <ul class="swap-card__list">
+                  <li>Bob</li>
+                  <li>Susan</li>
+                  <li>Joe</li>
+                  <li>John</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script
+      type="module"
+      src="/main.js"
+    ></script>
+  </body>
+</html>

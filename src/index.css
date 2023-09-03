@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased font-body text-lg bg-slate-700 text-white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply mt-[1.5rem] mb-[1rem] font-heading font-extrabold;
+  }
+
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
+  }
+
+  h3 {
+    @apply text-2xl;
+  }
+
+  h4 {
+    @apply text-xl;
+  }
+}
+
+@layer components {
+  .swap-card {
+    @apply rounded-lg shadow-lg bg-white text-black/90 font-medium w-full;
+  }
+
+  .swap-card__header {
+    @apply bg-slate-300 rounded-t-lg px-4 py-2 [&_h4]:m-0 [&_h4]:font-semibold;
+  }
+
+  .swap-card__body {
+    @apply p-4;
+  }
+
+  .swap-card__list {
+    @apply list-decimal pl-4;
+  }
+
+  .swap-btn {
+    @apply flex items-center justify-center rounded-lg border-2 border-slate-300 px-2 py-1; 
+  }
+
+}
+
+@media (min-width: 640px) {
+  .swap-btn span {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+  }
+}
