@@ -1,8 +1,9 @@
 export default function (Alpine) {
 
-  function insertNodesBefore(el, fragment) {
+  function insertNodesBefore(parentNode, insertBefore, fragment) {
     while (fragment.childNodes.length > 0) {
-      el.before(fragment.firstChild);
+      const child = fragment.firstChild;
+      parentNode.insertBefore(child, insertBefore);
     }
   }
 
@@ -31,12 +32,12 @@ export default function (Alpine) {
   }
   
   function swapAfterBegin(target, fragment, onSettleCallback) {
-    insertNodesBefore(target.firstChild, fragment)
+    insertNodesBefore(target, target.firstChild, fragment)
     return onSettleCallback()
   }
   
   function swapBeforeBegin(target, fragment, onSettleCallback) {
-    insertNodesBefore(parentElt(target), target, fragment)
+    insertNodesBefore(target.parentElement, target, fragment)
     return onSettleCallback()
   }
   
@@ -52,7 +53,7 @@ export default function (Alpine) {
   
   function swapInnerHTML(target, fragment, onSettleCallback) {
     var firstChild = target.firstChild;
-    insertNodesBefore(target, firstChild, fragment);
+    insertNodesBefore(target, target.firstChild, fragment.firstChild);
   
     if (firstChild) {
       while (firstChild.nextSibling) {
@@ -89,7 +90,7 @@ export default function (Alpine) {
     }
   }
 
-  Alpine.magic('wire', (el, { Alpine }) => (endpoint, select, target, swapStyle = 'innerHTML', onSettleCallback = () => { }) => {
+  Alpine.magic('swap', (el, { Alpine }) => (endpoint, select, target, swapStyle = 'innerHTML', onSettleCallback = () => { }) => {
     endpoint = endpoint || window.location.href
     target = target ? document.querySelector(target) : el
 
