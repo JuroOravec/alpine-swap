@@ -32,19 +32,16 @@
       <h1>Alpine Wire Plugin</h1>
       <section>
         <h2>Swap Methods</h2>
-        <div>
-          <h3>innerHTML</h3>
+        <div x-data id="outerHTML">
+          <h3>outerHTML</h3>
           <div class="flex flex-col sm:flex-row gap-4">
             <div
-              x-wire-source
               class="swap-card"
             >
               <div class="swap-card__header">
-                <h4>
-                  Swap Target
-                </h4>
+                <h4>Swap Target</h4>
               </div>
-              <div class="swap-card__body">
+              <div class="swap-card__body target">
                 <ul class="swap-card__list">
                   <li>Bob</li>
                   <li>Susan</li>
@@ -53,26 +50,106 @@
                 </ul>
               </div>
             </div>
-            <button class="swap-btn">
-              <span>
-                Swap
-              </span>
+            <button
+              class="swap-btn"
+              @click="$wire(null, '#outerHTML .source', '#outerHTML .target', 'outerHTML')"
+            >
+              <span> Swap </span>
             </button>
             <div
-              x-wire-target
               class="swap-card"
             >
               <div class="swap-card__header">
-                <h4>
-                  Swap Source
-                </h4>
+                <h4>Swap Source</h4>
+              </div>
+              <div class="swap-card__body source">
+                <ul class="swap-card__list">
+                  <li>Source Bob</li>
+                  <li>Source Susan</li>
+                  <li>Source Joe</li>
+                  <li>Source John</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div x-data id="afterbegin">
+          <h3>afterbegin</h3>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div
+              class="swap-card"
+            >
+              <div class="swap-card__header">
+                <h4>Swap Target</h4>
               </div>
               <div class="swap-card__body">
-                <ul class="swap-card__list">
+                <ul class="swap-card__list target">
                   <li>Bob</li>
                   <li>Susan</li>
                   <li>Joe</li>
                   <li>John</li>
+                </ul>
+              </div>
+            </div>
+            <button
+              class="swap-btn"
+              @click="$wire(null, '#afterbegin .source', '#afterbegin .target', 'afterbegin')"
+            >
+              <span> Swap </span>
+            </button>
+            <div
+              class="swap-card"
+            >
+              <div class="swap-card__header">
+                <h4>Swap Source</h4>
+              </div>
+              <div class="swap-card__body">
+                <ul class="swap-card__list source">
+                  <li>Source Bob</li>
+                  <li>Source Susan</li>
+                  <li>Source Joe</li>
+                  <li>Source John</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div x-data id="beforebegin">
+          <h3>beforebegin</h3>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div
+              class="swap-card"
+            >
+              <div class="swap-card__header">
+                <h4>Swap Target</h4>
+              </div>
+              <div class="swap-card__body">
+                <ul class="swap-card__list target">
+                  <li>Bob</li>
+                  <li>Susan</li>
+                  <li>Joe</li>
+                  <li>John</li>
+                </ul>
+              </div>
+            </div>
+            <button
+              class="swap-btn"
+              @click="$wire(null, '#beforebegin .source', '#beforebegin .target', 'beforebegin')"
+            >
+              <span> Swap </span>
+            </button>
+            <div
+              class="swap-card"
+            >
+              <div class="swap-card__header">
+                <h4>Swap Source</h4>
+              </div>
+              <div class="swap-card__body">
+                <ul class="swap-card__list source">
+                  <li>Source Bob</li>
+                  <li>Source Susan</li>
+                  <li>Source Joe</li>
+                  <li>Source John</li>
                 </ul>
               </div>
             </div>
@@ -80,6 +157,12 @@
         </div>
       </section>
     </main>
+
+    <footer class="flex justify-center">
+      <div class="py-12">
+        Made with ❤️ by <a href="https://jamesauble.com">James Auble</a>
+      </div>
+    </footer>
 
     <script
       type="module"
