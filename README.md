@@ -59,20 +59,24 @@ Default Settings Object
 
 #### endpoint: string (optional)
 Default: The current URL.
+
 The URL for the GET request.
 
 #### select: string (optional)
 Default: Request body.
+
 A valid CSS selector to select the element that will be swapped into the current page.
 
 > Note: This selector can select 1 or more elements. Ex. Both ul li and ul#unique-id are okay.
 
 #### target: string|HTMLElement (optional)
 Default: The element that called $swap.
+
 A valid CSS selector or HTML element.
 
 #### swapMethod: string (optional)
 Default: 'innerHTML'
+
 | Method | Description |
 | --- | --- |
 | `innerHTML` | The default, replace the inner html of the target element.  |
@@ -84,6 +88,7 @@ Default: 'innerHTML'
 
 #### transition: boolean (optional)
 Default: false
+
 Use the new View Transitions API when a swap occurs.
 
 #### onSettle: function (optional)
