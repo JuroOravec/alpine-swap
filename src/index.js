@@ -15,94 +15,136 @@ export default function (Alpine) {
       })
   }
 
-  function swapOuterHTML(target, fragment, onSettleCallback) {
+  const targetElement = (target) => {
+    if (typeof target === 'string') {
+      return document.querySelector(target)
+    } else if (target instanceof HTMLElement) {
+      return target
+    } else {
+      return null
+    } 
+  }
+
+  const selectedElement = (select, response) => {
+    if (select && typeof select === 'string') {
+      return response.querySelectorAll(select)
+    } else {
+      return [response.body]
+    }
+  }
+
+  function swapOuterHTML(target, fragment, onSettle) {
     if (target.tagName === "BODY") {
-      return swapInnerHTML(target, fragment, onSettleCallback);
+      return swapInnerHTML(target, fragment, onSettle);
     } else {
       // @type {HTMLElement}
-  
+
       if (Alpine.morph) {
         Alpine.morph(target, fragment)
       } else {
         target.replaceWith(fragment)
       }
     }
-  
-    return onSettleCallback()
+
+    return onSettle.call(this, target)
   }
-  
-  function swapAfterBegin(target, fragment, onSettleCallback) {
+
+  function swapAfterBegin(target, fragment, onSettle) {
     insertNodesBefore(target, target.firstChild, fragment)
-    return onSettleCallback()
+    return onSettle.call(this, target)
   }
-  
-  function swapBeforeBegin(target, fragment, onSettleCallback) {
+
+  function swapBeforeBegin(target, fragment, onSettle) {
     insertNodesBefore(target.parentElement, target, fragment)
-    return onSettleCallback()
+    return onSettle.call(this, target)
   }
-  
-  function swapBeforeEnd(target, fragment, onSettleCallback) {
+
+  function swapBeforeEnd(target, fragment, onSettle) {
     insertNodesBefore(target, null, fragment);
-    return onSettleCallback()
+    return onSettle.call(this, target)
   }
-  
-  function swapAfterEnd(target, fragment, onSettleCallback) {
+
+  function swapAfterEnd(target, fragment, onSettle) {
     insertNodesBefore(target.parentElement, target.nextSibling, fragment);
-    return onSettleCallback()
+    return onSettle.call(this, target)
   }
-  
-  function swapInnerHTML(target, fragment, onSettleCallback) {
+
+  function swapInnerHTML(target, fragment, onSettle) {
     var firstChild = target.firstChild;
     insertNodesBefore(target, target.firstChild, fragment.firstChild);
-  
+
     if (firstChild) {
       while (firstChild.nextSibling) {
         target.removeChild(firstChild.nextSibling);
       }
       target.removeChild(firstChild);
     }
-  
-    onSettleCallback();
+
+    return onSettle.call(this, target)
   }
 
-  function swap(swapStyle, target, fragment, onSettleCallback) {
-    switch (swapStyle) {
+  function swap(swapMethod, target, fragment, onSettle) {
+    switch (swapMethod) {
       case "none":
         return;
       case "outerHTML":
-        swapOuterHTML(target, fragment, onSettleCallback);
+        swapOuterHTML(target, fragment, onSettle);
         return;
       case "afterbegin":
-        swapAfterBegin(target, fragment, onSettleCallback);
+        swapAfterBegin(target, fragment, onSettle);
         return;
       case "beforebegin":
-        swapBeforeBegin(target, fragment, onSettleCallback);
+        swapBeforeBegin(target, fragment, onSettle);
         return;
       case "beforeend":
-        swapBeforeEnd(target, fragment, onSettleCallback);
+        swapBeforeEnd(target, fragment, onSettle);
         return;
       case "afterend":
-        swapAfterEnd(target, fragment, onSettleCallback);
+        swapAfterEnd(target, fragment, onSettle);
         return;
       default:
-        swapInnerHTML(target, fragment, onSettleCallback);
+        swapInnerHTML(target, fragment, onSettle);
         return
     }
   }
 
-  Alpine.magic('swap', (el, { Alpine }) => (endpoint, select, target, swapStyle = 'innerHTML', onSettleCallback = () => { }) => {
-    endpoint = endpoint || window.location.href
-    target = target ? document.querySelector(target) : el
+
+  Alpine.magic('swap', (el, { Alpine }) => (settings) => {
+
+    let defaultSettings = {
+      endpoint: window.location.href,
+      select: null,
+      target: el,
+      swapMethod: 'innerHTML',
+      onSettle: () => { },
+      transition: false
+    }
+
+    const {
+      endpoint,
+      select,
+      target,
+      swapMethod,
+      onSettle,
+      transition
+    } = Object.assign(defaultSettings, settings)
 
     fetchHTML(endpoint).then((response) => {
+
       let fragment = document.createDocumentFragment()
-      const selected = select && response.querySelectorAll(select) ? response.querySelectorAll(select) : response.body
+      const selected = selectedElement(select, response)
 
       selected.forEach((node) => {
         fragment.appendChild(node.cloneNode(true))
       })
 
-      swap(swapStyle, target, fragment, onSettleCallback)
+      if (transition && document.startViewTransition) {
+        document.startViewTransition(() => {
+          swap(swapMethod, targetElement(target), fragment, onSettle)
+        })
+      } else {
+        swap(swapMethod, targetElement(target), fragment, onSettle)
+      }
     })
   })
 }
