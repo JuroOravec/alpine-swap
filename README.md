@@ -93,3 +93,5 @@ Use the new View Transitions API when a swap occurs.
 
 #### onSettle: function (optional)
 A callback that is called after the source is swapped into the current page.
+
+Accepts the swap target as a parameter.
