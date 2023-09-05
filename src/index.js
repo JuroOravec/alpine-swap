@@ -7,12 +7,33 @@ export default function (Alpine) {
     }
   }
 
-  const fetchHTML = async (endpoint) => {
-    return await fetch(endpoint)
-      .then((response) => response.text())
+  const fetchHTML = async (endpoint, requestConfig, target, elt) => {
+    return await fetch(endpoint, requestConfig)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText)
+        }
+
+        return response.text()
+      })
       .then((responseText) => {
         return new DOMParser().parseFromString(responseText, 'text/html')
       })
+      .catch((error) => {
+        emitEvent('alpineSwap:responseError', target, {
+          error,
+          elt: elt,
+          target
+        })
+      })
+  }
+
+  const emitEvent = (event, target, detail = {}) => {
+    target.dispatchEvent(new CustomEvent(event, {
+      bubbles: true,
+      cancelable: true,
+      detail
+    }))
   }
 
   const targetElement = (target) => {
@@ -22,7 +43,7 @@ export default function (Alpine) {
       return target
     } else {
       return null
-    } 
+    }
   }
 
   const selectedElement = (select, response) => {
@@ -33,9 +54,9 @@ export default function (Alpine) {
     }
   }
 
-  function swapOuterHTML(target, fragment, onSettle) {
+  function swapOuterHTML(target, fragment) {
     if (target.tagName === "BODY") {
-      return swapInnerHTML(target, fragment, onSettle);
+      return swapInnerHTML(target, fragment);
     } else {
       // @type {HTMLElement}
 
@@ -46,30 +67,30 @@ export default function (Alpine) {
       }
     }
 
-    return onSettle.call(this, target)
+    return 
   }
 
-  function swapAfterBegin(target, fragment, onSettle) {
+  function swapAfterBegin(target, fragment) {
     insertNodesBefore(target, target.firstChild, fragment)
-    return onSettle.call(this, target)
+    return 
   }
 
-  function swapBeforeBegin(target, fragment, onSettle) {
+  function swapBeforeBegin(target, fragment) {
     insertNodesBefore(target.parentElement, target, fragment)
-    return onSettle.call(this, target)
+    return 
   }
 
-  function swapBeforeEnd(target, fragment, onSettle) {
+  function swapBeforeEnd(target, fragment) {
     insertNodesBefore(target, null, fragment);
-    return onSettle.call(this, target)
+    return 
   }
 
-  function swapAfterEnd(target, fragment, onSettle) {
+  function swapAfterEnd(target, fragment) {
     insertNodesBefore(target.parentElement, target.nextSibling, fragment);
-    return onSettle.call(this, target)
+    return 
   }
 
-  function swapInnerHTML(target, fragment, onSettle) {
+  function swapInnerHTML(target, fragment) {
     var firstChild = target.firstChild;
     insertNodesBefore(target, target.firstChild, fragment.firstChild);
 
@@ -80,34 +101,33 @@ export default function (Alpine) {
       target.removeChild(firstChild);
     }
 
-    return onSettle.call(this, target)
+    return 
   }
 
-  function swap(swapMethod, target, fragment, onSettle) {
+  function swap(swapMethod, target, fragment) {
     switch (swapMethod) {
       case "none":
         return;
       case "outerHTML":
-        swapOuterHTML(target, fragment, onSettle);
+        swapOuterHTML(target, fragment);
         return;
       case "afterbegin":
-        swapAfterBegin(target, fragment, onSettle);
+        swapAfterBegin(target, fragment);
         return;
       case "beforebegin":
-        swapBeforeBegin(target, fragment, onSettle);
+        swapBeforeBegin(target, fragment);
         return;
       case "beforeend":
-        swapBeforeEnd(target, fragment, onSettle);
+        swapBeforeEnd(target, fragment);
         return;
       case "afterend":
-        swapAfterEnd(target, fragment, onSettle);
+        swapAfterEnd(target, fragment);
         return;
       default:
-        swapInnerHTML(target, fragment, onSettle);
+        swapInnerHTML(target, fragment);
         return
     }
   }
-
 
   Alpine.magic('swap', (el, { Alpine }) => (settings) => {
 
@@ -116,7 +136,6 @@ export default function (Alpine) {
       select: null,
       target: el,
       swapMethod: 'innerHTML',
-      onSettle: () => { },
       transition: false
     }
 
@@ -125,12 +144,22 @@ export default function (Alpine) {
       select,
       target,
       swapMethod,
-      onSettle,
       transition
     } = Object.assign(defaultSettings, settings)
 
-    fetchHTML(endpoint).then((response) => {
+    const targetEl = targetElement(target)
+    const requestConfig = {}
 
+    emitEvent('alpineSwap:beforeRequest', targetEl, {
+      elt: el,
+      target: targetEl,
+      requestConfig
+    })
+
+    fetchHTML(endpoint, requestConfig, targetEl, el).then((response) => {
+      
+      if (!response) return
+      
       let fragment = document.createDocumentFragment()
       const selected = selectedElement(select, response)
 
@@ -138,13 +167,33 @@ export default function (Alpine) {
         fragment.appendChild(node.cloneNode(true))
       })
 
+      emitEvent('alpineSwap:beforeSwap', targetEl, {
+        endpoint,
+        elt: el,
+        select,
+        fragment: fragment,
+        target: targetEl,
+        swapMethod,
+        transition
+      })
+
       if (transition && document.startViewTransition) {
         document.startViewTransition(() => {
-          swap(swapMethod, targetElement(target), fragment, onSettle)
+          swap(swapMethod, targetEl, fragment)
         })
       } else {
-        swap(swapMethod, targetElement(target), fragment, onSettle)
+        swap(swapMethod, targetEl, fragment)
       }
+
+      emitEvent('alpineSwap:afterSwap', targetEl, {
+        endpoint,
+        elt: el,
+        select,
+        fragment: fragment,
+        target: targetEl,
+        swapMethod,
+        transition
+      })
     })
   })
 }

@@ -2,11 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="/vite.svg"
-    />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0"
@@ -52,6 +47,18 @@
         <h2>Swap Methods</h2>
         <div
           x-data="{ swapSettings: { select: '#innerHTML .source', target: '#innerHTML .target', swapMethod: 'innerHTML', transition: true } }"
+          @alpine-swap:before-request.camel="(e) => {
+            console.log(e)
+          }"
+          @alpine-swap:before-swap.camel="(e) => {
+            console.log(e)
+          }"
+          @alpine-swap:after-swap.camel="(e) => {
+            console.log(e)
+          }"
+          @alpine-swap:response-error.camel="(e) => {
+            console.log(e)
+          }"
           id="innerHTML"
         >
           <h3>innerHTML</h3>
@@ -96,9 +103,6 @@
               select: '#outerHTML .source', 
               target: '#outerHTML .target', 
               swapMethod: 'outerHTML',
-              onSettle: (target) => { 
-                console.log(target) 
-              },
               transition: true
             } 
           }"
