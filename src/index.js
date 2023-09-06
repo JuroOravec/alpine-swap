@@ -1,15 +1,21 @@
 export default function (Alpine) {
 
-  function insertNodesBefore(parentNode, insertBefore, fragment) {
+  function insertNodesBefore(parentNode, insertBefore, fragment, settleInfo) {
     while (fragment.childNodes.length > 0) {
-      const child = fragment.firstChild;
-      parentNode.insertBefore(child, insertBefore);
+      const child = fragment.firstChild
+      parentNode.insertBefore(child, insertBefore)
+      settleInfo.addedEls.push(child)
     }
   }
 
   const fetchHTML = async (endpoint, requestConfig, target, elt) => {
+    addClass(elt, 'alpine-swap-request')
+
     return await fetch(endpoint, requestConfig)
       .then((response) => {
+
+        removeClass(elt, 'alpine-swap-request')
+
         if (!response.ok) {
           throw new Error(response.statusText)
         }
@@ -28,12 +34,32 @@ export default function (Alpine) {
       })
   }
 
+  function forEach(arr, func) {
+    if (!arr) return
+
+    for (var i = 0; i < arr.length; i++) {
+      func(arr[i], i)
+    }
+  }
+
   const emitEvent = (event, target, detail = {}) => {
     target.dispatchEvent(new CustomEvent(event, {
       bubbles: true,
       cancelable: true,
       detail
     }))
+  }
+
+  function addClass(el, clazz) {
+    if (!el.classList) return
+
+    el.classList.add(clazz)
+  }
+
+  function removeClass(el, clazz) {
+    if (!el.classList) return
+
+    el.classList.remove(clazz)
   }
 
   const targetElement = (target) => {
@@ -46,6 +72,26 @@ export default function (Alpine) {
     }
   }
 
+  function makeSettleInfo(target, delay) {
+    return {
+      tasks: [],
+      elts: [target],
+      addedEls: [],
+      delay: delay
+    };
+  }
+
+  function doSettle(settleInfo) {
+    forEach(settleInfo.tasks, task => task())
+    forEach(settleInfo.elts, el => addClass(el, 'alpine-swap-settling'))
+    forEach(settleInfo.addedEls, el => addClass(el, 'alpine-swap-added'))
+
+    setTimeout(() => {
+      forEach(settleInfo.elts, el => removeClass(el, 'alpine-swap-settling'))
+      forEach(settleInfo.addedEls, el => removeClass(el, 'alpine-swap-added'))
+    }, settleInfo.delay)
+  }
+
   const selectedElement = (select, response) => {
     if (select && typeof select === 'string') {
       return response.querySelectorAll(select)
@@ -54,45 +100,47 @@ export default function (Alpine) {
     }
   }
 
-  function swapOuterHTML(target, fragment) {
+  function swapOuterHTML(target, fragment, settleInfo, morph) {
     if (target.tagName === "BODY") {
       return swapInnerHTML(target, fragment);
     } else {
       // @type {HTMLElement}
 
-      if (Alpine.morph) {
-        Alpine.morph(target, fragment)
+      const fragmentContents = fragment.firstElementChild
+
+      settleInfo.elts.push(fragmentContents)
+      settleInfo.addedEls.push(fragmentContents)
+
+      if (morph && Alpine.morph) {
+        Alpine.morph(target, fragmentContents)
       } else {
-        target.replaceWith(fragment)
+        if (morph) {
+          console.error("Alpine Swap: Alpine.morph is not available. Please include the Alpine Morph plugin and register it before Alpine Swap.")
+        }
+        target.replaceWith(fragmentContents)
       }
     }
-
-    return 
   }
 
-  function swapAfterBegin(target, fragment) {
-    insertNodesBefore(target, target.firstChild, fragment)
-    return 
+  function swapAfterBegin(target, fragment, settleInfo) {
+    insertNodesBefore(target, target.firstChild, fragment, settleInfo)
   }
 
-  function swapBeforeBegin(target, fragment) {
-    insertNodesBefore(target.parentElement, target, fragment)
-    return 
+  function swapBeforeBegin(target, fragment, settleInfo) {
+    insertNodesBefore(target.parentElement, target, fragment, settleInfo)
   }
 
-  function swapBeforeEnd(target, fragment) {
-    insertNodesBefore(target, null, fragment);
-    return 
+  function swapBeforeEnd(target, fragment, settleInfo) {
+    insertNodesBefore(target, null, fragment, settleInfo);
   }
 
-  function swapAfterEnd(target, fragment) {
-    insertNodesBefore(target.parentElement, target.nextSibling, fragment);
-    return 
+  function swapAfterEnd(target, fragment, settleInfo) {
+    insertNodesBefore(target.parentElement, target.nextSibling, fragment, settleInfo);
   }
 
-  function swapInnerHTML(target, fragment) {
+  function swapInnerHTML(target, fragment, settleInfo) {
     var firstChild = target.firstChild;
-    insertNodesBefore(target, target.firstChild, fragment.firstChild);
+    insertNodesBefore(target, target.firstChild, fragment.firstChild, settleInfo);
 
     if (firstChild) {
       while (firstChild.nextSibling) {
@@ -100,31 +148,29 @@ export default function (Alpine) {
       }
       target.removeChild(firstChild);
     }
-
-    return 
   }
 
-  function swap(swapMethod, target, fragment) {
+  function swap(swapMethod, target, fragment, settleInfo, morph) {
     switch (swapMethod) {
       case "none":
         return;
       case "outerHTML":
-        swapOuterHTML(target, fragment);
+        swapOuterHTML(target, fragment, settleInfo, morph);
         return;
       case "afterbegin":
-        swapAfterBegin(target, fragment);
+        swapAfterBegin(target, fragment, settleInfo);
         return;
       case "beforebegin":
-        swapBeforeBegin(target, fragment);
+        swapBeforeBegin(target, fragment, settleInfo);
         return;
       case "beforeend":
-        swapBeforeEnd(target, fragment);
+        swapBeforeEnd(target, fragment, settleInfo);
         return;
       case "afterend":
-        swapAfterEnd(target, fragment);
+        swapAfterEnd(target, fragment, settleInfo);
         return;
       default:
-        swapInnerHTML(target, fragment);
+        swapInnerHTML(target, fragment, settleInfo);
         return
     }
   }
@@ -136,7 +182,9 @@ export default function (Alpine) {
       select: null,
       target: el,
       swapMethod: 'innerHTML',
-      transition: false
+      transition: false,
+      morph: false,
+      settleDelay: 20
     }
 
     const {
@@ -144,28 +192,35 @@ export default function (Alpine) {
       select,
       target,
       swapMethod,
-      transition
+      transition,
+      morph,
+      settleDelay
     } = Object.assign(defaultSettings, settings)
 
     const targetEl = targetElement(target)
     const requestConfig = {}
 
+    if (!targetEl) {
+      throw new Error('Alpine Swap: A selected element or DOM element must be provided as a target.')
+    }
+    
     emitEvent('alpineSwap:beforeRequest', targetEl, {
       elt: el,
       target: targetEl,
       requestConfig
     })
 
+
     fetchHTML(endpoint, requestConfig, targetEl, el).then((response) => {
-      
+
       if (!response) return
-      
+
+      const settleInfo = makeSettleInfo(targetEl, settleDelay);
+
       let fragment = document.createDocumentFragment()
       const selected = selectedElement(select, response)
 
-      selected.forEach((node) => {
-        fragment.appendChild(node.cloneNode(true))
-      })
+      forEach(selected, (node) => fragment.appendChild(node.cloneNode(true)))
 
       emitEvent('alpineSwap:beforeSwap', targetEl, {
         endpoint,
@@ -177,12 +232,16 @@ export default function (Alpine) {
         transition
       })
 
+      addClass(targetEl, 'alpine-swap-swapping')
+
       if (transition && document.startViewTransition) {
         document.startViewTransition(() => {
-          swap(swapMethod, targetEl, fragment)
+          swap(swapMethod, targetEl, fragment, settleInfo, morph)
+          doSettle(settleInfo)
         })
       } else {
-        swap(swapMethod, targetEl, fragment)
+        swap(swapMethod, targetEl, fragment, settleInfo, morph)
+        doSettle(settleInfo)
       }
 
       emitEvent('alpineSwap:afterSwap', targetEl, {
@@ -194,6 +253,8 @@ export default function (Alpine) {
         swapMethod,
         transition
       })
+
+      removeClass(targetEl, 'alpine-swap-swapping')
     })
   })
 }

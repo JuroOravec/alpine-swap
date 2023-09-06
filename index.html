@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/morph@3.x.x/dist/cdn.min.js"></script>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
@@ -47,18 +48,6 @@
         <h2>Swap Methods</h2>
         <div
           x-data="{ swapSettings: { select: '#innerHTML .source', target: '#innerHTML .target', swapMethod: 'innerHTML', transition: true } }"
-          @alpine-swap:before-request.camel="(e) => {
-            console.log(e)
-          }"
-          @alpine-swap:before-swap.camel="(e) => {
-            console.log(e)
-          }"
-          @alpine-swap:after-swap.camel="(e) => {
-            console.log(e)
-          }"
-          @alpine-swap:response-error.camel="(e) => {
-            console.log(e)
-          }"
           id="innerHTML"
         >
           <h3>innerHTML</h3>
@@ -103,7 +92,9 @@
               select: '#outerHTML .source', 
               target: '#outerHTML .target', 
               swapMethod: 'outerHTML',
-              transition: true
+              transition: false,
+              settleDelay: 2000,
+              morph: true
             } 
           }"
           x-init="console.log(swapSettings.select)"
@@ -146,7 +137,7 @@
           </div>
         </div>
         <div
-          x-data="{ swapSettings: { select: '#beforebegin .source', target: '#beforebegin .target', swapMethod: 'beforebegin', transition: true } }"
+          x-data="{ swapSettings: { select: '#beforebegin .source', target: '#beforebegin .target', swapMethod: 'beforebegin', transition: true, settleDelay: 10000 } }"
           id="beforebegin"
         >
           <h3>beforebegin</h3>
@@ -186,7 +177,7 @@
           </div>
         </div>
         <div
-          x-data="{ swapSettings: { select: '#afterbegin .source li', target: '#afterbegin .target', swapMethod: 'afterbegin' } }"
+          x-data="{ swapSettings: { select: '#afterbegin .source li', target: '#afterbegin .target', swapMethod: 'afterbegin', settleDelay: 10000 } }"
           id="afterbegin"
         >
           <h3>afterbegin</h3>
