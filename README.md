@@ -101,6 +101,20 @@ Default: 20
 
 Delay after swapping before items are considered "settled". Order of operations are derived from HTMX. Learn more [here](https://htmx.org/docs/#request-operations).
 
+## Classes
+
+### Class `alpine-swap-request`
+Added to the trigger element immediately before `fetch()` is called and removed once the response is received.
+
+### Class `alpine-swap-swapping`
+Upon getting a response the target element is marked with the htmx-swapping class
+
+### Class `alpine-swap-settling`
+Applied to the target just before swapping and removed immediately after swapping. Mirrors HTMX [order of operations](https://htmx.org/docs/#request-operations).
+
+### Class `alpine-swap-added`
+Added to each individual element insertion after `alpine-swap-settling` and removed after the `settlingDelay` is finished.
+
 ## Events
 
 ### Event `alpineSwap:beforeRequest`
