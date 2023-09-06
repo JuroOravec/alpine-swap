@@ -137,3 +137,7 @@ This event is triggered before an AJAX request is issued.
 
 ### Event `alpineSwap:responseError`
 
+- `error`
+- `elt` Trigger element
+- `target` Target element
+
