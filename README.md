@@ -31,10 +31,7 @@ $swap({
   select: '#outerHTML .source', 
   target: '#outerHTML .target', 
   swapMethod: 'outerHTML',
-  transition: true,
-  onSettle: (target) => { 
-    console.log(target) 
-  }
+  transition: true
 })
 ```
 
@@ -51,30 +48,31 @@ Default Settings Object
   target: el,
   swapMethod: 'innerHTML',
   transition: false,
-  onSettle: () => { }
+  morph: false,
+  settleDelay: 20 //milliseconds
 }
 ```
 
 ### Settings Options
 
-#### endpoint: string (optional)
+#### `endpoint` string (optional)
 Default: The current URL.
 
 The URL for the GET request.
 
-#### select: string (optional)
+#### `select` string (optional)
 Default: Request body.
 
 A valid CSS selector to select the element that will be swapped into the current page.
 
 > Note: This selector can select 1 or more elements. Ex. Both ul li and ul#unique-id are okay.
 
-#### target: string|HTMLElement (optional)
+#### `target` string|HTMLElement (optional)
 Default: The element that called $swap.
 
 A valid CSS selector or HTML element.
 
-#### swapMethod: string (optional)
+#### `swapMethod` string (optional)
 Default: 'innerHTML'
 
 | Method | Description |
@@ -86,12 +84,56 @@ Default: 'innerHTML'
 | `beforeend` | Insert the response after the last child of the target element.  |
 | `afterend` | Insert the response after the target element.  |
 
-#### transition: boolean (optional)
+#### `transition` boolean (optional)
 Default: false
 
 Use the new View Transitions API when a swap occurs.
 
-#### onSettle: function (optional)
-A callback that is called after the source is swapped into the current page.
+#### `morph` boolean (optional)
+Default: false
 
-Accepts the swap target as a parameter.
+Whether or not to use Alpine Morph when inserting elements. Alpine Morph must be loaded first. 
+
+> Only works with swap method outerHTML
+
+#### `settleDelay` number (optional)
+Default: 20
+
+Delay after swapping before items are considered "settled". Order of operations are derived from HTMX. Learn more [here](https://htmx.org/docs/#request-operations).
+
+## Events
+
+### Event `alpineSwap:beforeRequest`
+
+This event is triggered before an AJAX request is issued. 
+
+#### Details
+- `elt` Trigger element
+- `target` Target element
+- `requestConfig` Options to be passed to `fetch()`
+
+### Event `alpineSwap:beforeSwap`
+
+#### Details
+- `endpoint`
+- `elt` Trigger element
+- `select` CSS selector used for querySelector
+- `fragment` Response fragment
+- `target` Target element
+- `swapMethod`
+- `transition`
+- `morph`
+
+### Event `alpineSwap:afterSwap`
+
+- `endpoint`
+- `elt` Trigger element
+- `select` CSS selector used for querySelector
+- `fragment` Response fragment
+- `target` Target element
+- `swapMethod`
+- `transition`
+- `morph`
+
+### Event `alpineSwap:responseError`
+

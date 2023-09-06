@@ -229,7 +229,8 @@ export default function (Alpine) {
         fragment: fragment,
         target: targetEl,
         swapMethod,
-        transition
+        transition,
+        morph
       })
 
       addClass(targetEl, 'alpine-swap-swapping')
@@ -251,7 +252,8 @@ export default function (Alpine) {
         fragment: fragment,
         target: targetEl,
         swapMethod,
-        transition
+        transition,
+        morph
       })
 
       removeClass(targetEl, 'alpine-swap-swapping')
