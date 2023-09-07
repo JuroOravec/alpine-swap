@@ -109,6 +109,7 @@ export default function (Alpine) {
       const fragmentContents = fragment.firstElementChild
 
       settleInfo.elts.push(fragmentContents)
+
       settleInfo.addedEls.push(fragmentContents)
 
       if (morph && Alpine.morph) {
@@ -139,6 +140,7 @@ export default function (Alpine) {
   }
 
   function swapInnerHTML(target, fragment, settleInfo) {
+    console.log('innerHTML')
     var firstChild = target.firstChild;
     insertNodesBefore(target, target.firstChild, fragment.firstChild, settleInfo);
 
@@ -203,7 +205,7 @@ export default function (Alpine) {
     if (!targetEl) {
       throw new Error('Alpine Swap: A selected element or DOM element must be provided as a target.')
     }
-    
+
     emitEvent('alpineSwap:beforeRequest', targetEl, {
       elt: el,
       target: targetEl,
