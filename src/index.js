@@ -8,7 +8,7 @@ export default function (Alpine) {
     }
   }
 
-  const fetchHTML = async (endpoint, requestConfig, target, elt) => {
+  const fetchHTML = async ({ endpoint, requestConfig, target, elt, onError, onSuccess }) => {
     addClass(elt, 'alpine-swap-request')
 
     return await fetch(endpoint, requestConfig)
@@ -26,6 +26,10 @@ export default function (Alpine) {
         return new DOMParser().parseFromString(responseText, 'text/html')
       })
       .catch((error) => {
+        if (onError) {
+          onError(error);
+        }
+
         emitEvent('alpineSwap:responseError', target, {
           error,
           elt: elt,
@@ -186,7 +190,12 @@ export default function (Alpine) {
       swapMethod: 'innerHTML',
       transition: false,
       morph: false,
-      settleDelay: 20
+      settleDelay: 20,
+      requestConfig: {},
+      onError: (error) => {
+        console.error('Alpine Swap: Error fetching HTML', error)
+      },
+      onSuccess: () => {},
     }
 
     const {
@@ -196,11 +205,13 @@ export default function (Alpine) {
       swapMethod,
       transition,
       morph,
-      settleDelay
+      settleDelay,
+      requestConfig,
+      onError,
+      onSuccess,
     } = Object.assign(defaultSettings, settings)
 
     const targetEl = targetElement(target)
-    const requestConfig = {}
 
     if (!targetEl) {
       throw new Error('Alpine Swap: A selected element or DOM element must be provided as a target.')
@@ -212,53 +223,62 @@ export default function (Alpine) {
       requestConfig
     })
 
+    fetchHTML({
+      endpoint,
+      requestConfig,
+      target: targetEl,
+      elt: el,
+      onError,
+    })
+      .then((response) => {
+        if (!response) return
 
-    fetchHTML(endpoint, requestConfig, targetEl, el).then((response) => {
+        const settleInfo = makeSettleInfo(targetEl, settleDelay);
 
-      if (!response) return
+        let fragment = document.createDocumentFragment()
+        const selected = selectedElement(select, response)
 
-      const settleInfo = makeSettleInfo(targetEl, settleDelay);
+        forEach(selected, (node) => fragment.appendChild(node.cloneNode(true)))
 
-      let fragment = document.createDocumentFragment()
-      const selected = selectedElement(select, response)
+        emitEvent('alpineSwap:beforeSwap', targetEl, {
+          endpoint,
+          elt: el,
+          select,
+          fragment: fragment,
+          target: targetEl,
+          swapMethod,
+          transition,
+          morph
+        })
 
-      forEach(selected, (node) => fragment.appendChild(node.cloneNode(true)))
+        addClass(targetEl, 'alpine-swap-swapping')
 
-      emitEvent('alpineSwap:beforeSwap', targetEl, {
-        endpoint,
-        elt: el,
-        select,
-        fragment: fragment,
-        target: targetEl,
-        swapMethod,
-        transition,
-        morph
-      })
-
-      addClass(targetEl, 'alpine-swap-swapping')
-
-      if (transition && document.startViewTransition) {
-        document.startViewTransition(() => {
+        if (transition && document.startViewTransition) {
+          document.startViewTransition(() => {
+            swap(swapMethod, targetEl, fragment, settleInfo, morph)
+            doSettle(settleInfo)
+          })
+        } else {
           swap(swapMethod, targetEl, fragment, settleInfo, morph)
           doSettle(settleInfo)
+        }
+
+        emitEvent('alpineSwap:afterSwap', targetEl, {
+          endpoint,
+          elt: el,
+          select,
+          fragment: fragment,
+          target: targetEl,
+          swapMethod,
+          transition,
+          morph
         })
-      } else {
-        swap(swapMethod, targetEl, fragment, settleInfo, morph)
-        doSettle(settleInfo)
-      }
 
-      emitEvent('alpineSwap:afterSwap', targetEl, {
-        endpoint,
-        elt: el,
-        select,
-        fragment: fragment,
-        target: targetEl,
-        swapMethod,
-        transition,
-        morph
-      })
+        removeClass(targetEl, 'alpine-swap-swapping')
 
-      removeClass(targetEl, 'alpine-swap-swapping')
-    })
+        if (onSuccess) {
+          onSuccess();
+        }
+      });
   })
 }
