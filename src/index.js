@@ -8,7 +8,7 @@ export default function (Alpine) {
     }
   }
 
-  const fetchHTML = async ({ endpoint, requestConfig, target, elt, onError, onSuccess }) => {
+  const fetchHTML = async ({ endpoint, requestConfig, target, elt, onError }) => {
     addClass(elt, 'alpine-swap-request')
 
     return await fetch(endpoint, requestConfig)
@@ -17,7 +17,9 @@ export default function (Alpine) {
         removeClass(elt, 'alpine-swap-request')
 
         if (!response.ok) {
-          throw new Error(response.statusText)
+          const error = new Error(response.statusText);
+          error.response = response;
+          throw error;
         }
 
         return response.text()
@@ -26,12 +28,15 @@ export default function (Alpine) {
         return new DOMParser().parseFromString(responseText, 'text/html')
       })
       .catch((error) => {
+        const response = (error && error.response) || null;
+
         if (onError) {
-          onError(error);
+          onError({ error, response });
         }
 
         emitEvent('alpineSwap:responseError', target, {
           error,
+          response,
           elt: elt,
           target
         })
@@ -242,6 +247,7 @@ export default function (Alpine) {
 
         emitEvent('alpineSwap:beforeSwap', targetEl, {
           endpoint,
+          response,
           elt: el,
           select,
           fragment: fragment,
@@ -265,6 +271,7 @@ export default function (Alpine) {
 
         emitEvent('alpineSwap:afterSwap', targetEl, {
           endpoint,
+          response,
           elt: el,
           select,
           fragment: fragment,
@@ -277,7 +284,7 @@ export default function (Alpine) {
         removeClass(targetEl, 'alpine-swap-swapping')
 
         if (onSuccess) {
-          onSuccess();
+          onSuccess({ response });
         }
       });
   })
